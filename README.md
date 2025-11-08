@@ -13,7 +13,3 @@ A full-stack expense tracker built with Flask (Python) and JavaScript.
 - SQLite / PostgreSQL
 - HTML, CSS, JavaScript
 
-## 🛠️ Setup
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/<your-username>/MakeTheBank.git
