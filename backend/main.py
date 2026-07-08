@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 class Transaction(BaseModel):
-    id: int
+    id: Optional[int] = None
     description: str
     amount: float
     category: str
@@ -42,16 +42,25 @@ class Transaction(BaseModel):
 
 current_id = 1
 #Helper
+# Helper
 def convert_to_transaction(transaction_row: tuple):
+    # If the date is a string from SQLite, convert it to a datetime.date object
+    db_date = transaction_row[5]
+    if isinstance(db_date, str):
+        parsed_date = datetime.date.fromisoformat(db_date)
+    else:
+        parsed_date = db_date
+
     converted_transaction = Transaction(
         id = transaction_row[0],
         description = transaction_row[1],
         amount = transaction_row[2],
         category = transaction_row[3],
         type = transaction_row[4],
-        date = transaction_row[5]
+        date = parsed_date  # Safely passed as a date object!
     )
     return converted_transaction
+
 #Helper
 def find_transaction_by_id(transaction_id: int) -> Optional[Transaction]:
     con = sqlite3.connect(DATABASE_URL)
@@ -90,7 +99,7 @@ def create_new_transaction(transaction: Transaction) -> Transaction:
 def get_all_transactions() -> List[Transaction]:
     con = sqlite3.connect(DATABASE_URL)
     cur = con.cursor()
-    cur.execute("SELECT * FROM Transaction")
+    cur.execute("SELECT * FROM Transactions")
     db: List[Transaction] = []
     all_transactions = cur.fetchall()
     con.close()
@@ -142,7 +151,7 @@ def update_specific_transaction(transaction_id: int, new_transaction: Transactio
     con = sqlite3.connect(DATABASE_URL)  
     cur = con.cursor()
     new_transaction_tuple = convert_to_tuple(new_transaction)
-    cur.execute("""UPDATE Transactions SET description = ?, amount = ? 
+    cur.execute("""UPDATE Transactions SET description = ?, amount = ?, 
                 category = ?, type = ?, date = ?
                 WHERE id=?""",new_transaction_tuple + (transaction_id,)
                 )
