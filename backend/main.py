@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 from typing import Literal, List, Optional 
 import datetime
 import sqlite3
 from contextlib import asynccontextmanager
+
 
 DATABASE_URL = "transactiondata.db"
 
@@ -30,11 +32,26 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 class Transaction(BaseModel):
     id: Optional[int] = None
     description: str
     amount: float
-    category: str
+    category: str = Field(min_length=1)
     type: Literal['income', 'expense']
     date: datetime.date
 

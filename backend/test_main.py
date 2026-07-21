@@ -4,6 +4,8 @@ import main
 
 # backend engine uses the fake db
 main.DATABASE_URL = "test_transactiondata.db"
+# REINITIALISE
+main.db_initialisation()
 
 client = TestClient(main.app)
 #clear the fake db after each test
@@ -87,7 +89,8 @@ class Test_update_functions:
                                                 "type": "income",
                                                 "date": "2026-07-02"})
         assert response.status_code == 200
-        assert response.json() == {"description": "Shack events pay check", 
+        assert response.json() == {         "id" : id1,
+                                            "description": "Shack events pay check", 
                                             "amount": 750.00,
                                             "category": "Hospitality",
                                                 "type": "income",
@@ -117,7 +120,7 @@ class Test_create_functions:
                                                 "date": "2026-07-08"})
             id1=response.json()["id"]
             assert response.status_code == 200
-            assert response.json() == {"id:id1"
+            assert response.json() == {"id": id1,
                                         "description": "Shack events pay check", 
                                             "amount": 500.00,
                                             "category": "Hospitality",
@@ -125,42 +128,47 @@ class Test_create_functions:
                                                 "date": "2026-07-08"}
 class Test_delete_functions:
     def test_delete_transactions(self):
-        firstTran = client.post("/api/transactions",json={"description": "Shack events pay check", 
-                                            "amount": 500.00,
-                                            "category": "Hospitality",
-                                                "type": "income",
-                                                "date": "2026-07-08"})
-        id1=firstTran.json()["id"]
-        response = client.delete("/api/transactions/")
+        firstTran = client.post("/api/transactions", json={
+            "description": "Shack events pay check", 
+            "amount": 500.00,
+            "category": "Hospitality",
+            "type": "income",
+            "date": "2026-07-08"
+        })
+        id1 = firstTran.json()["id"]
+        response = client.delete("/api/transactions")
         assert response.status_code == 200
-        assert response.json() == []
+        assert response.json() == {"message": "All transactions deleted successfully"}
+        
+        # Verify database is empty
+        get_response = client.get("/api/transactions")
+        assert get_response.json() == []
 
     def test_delete_specific_transaction(self):
-        firstTran = client.post("/api/transactions",json={"description": "Shack events pay check", 
-                                            "amount": 500.00,
-                                            "category": "Hospitality",
-                                                "type": "income",
-                                                "date": "2026-07-08"})
-        id1=firstTran.json()["id"]
-        secondTran = client.post("/api/transactions",json={"description": "Fuel", 
-                                            "amount": 60.00,
-                                            "category": "Car",
-                                                "type": "expense",
-                                                "date": "2026-07-08"})
-        id2=secondTran.json()["id"]
+        firstTran = client.post("/api/transactions", json={
+            "description": "Shack events pay check", 
+            "amount": 500.00,
+            "category": "Hospitality",
+            "type": "income",
+            "date": "2026-07-08"
+        })
+        id1 = firstTran.json()["id"]
+        
+        secondTran = client.post("/api/transactions", json={
+            "description": "Fuel", 
+            "amount": 60.00,
+            "category": "Car",
+            "type": "expense",
+            "date": "2026-07-08"
+        })
+        id2 = secondTran.json()["id"]
+        
         response = client.delete(f"/api/transactions/{id1}")
         assert response.status_code == 200
-        assert response.json() == {       "id" : id2,
-                                        "description": "Fuel", 
-                                            "amount": 60.00,
-                                            "category": "Car",
-                                                "type": "expense",
-                                                "date": "2026-07-08"}
+        # FIXED: Asserting the deletion confirmation message
+        assert response.json() == {"message": "Transaction deleted successfully"}
         
+        # FIXED: Confirms the second item (Fuel) successfully survived the deletion
         remaining = client.get("/api/transactions")
         assert len(remaining.json()) == 1
         assert remaining.json()[0]["id"] == id2
-
-
-
-
