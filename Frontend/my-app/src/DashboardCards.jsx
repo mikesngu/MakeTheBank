@@ -7,6 +7,7 @@ function DashboardCards() {
   const [category, setCategory] = useState("");
   const [dateOfTrans, setDateOfTrans] = useState("");
   const [transactions, setTransactions] = useState([]);
+  const today = new Date().toISOString().split('T')[0];
   const totalIncome = transactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
@@ -112,7 +113,7 @@ useEffect(() => {
           <option value="other">Other</option>
         </select>
         
-        <input value={dateOfTrans} onChange={handleDateOfTrans} type="date" required />
+        <input value={dateOfTrans} onChange={handleDateOfTrans} type="date" max={today} required />
       </div>
 
       <div className="button-group">
